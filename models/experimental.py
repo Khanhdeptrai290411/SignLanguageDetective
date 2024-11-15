@@ -85,17 +85,19 @@ class Ensemble(nn.ModuleList):
         return y, None  # inference, train output
 
 
-def attempt_load(weights, device=None, inplace=True, fuse=True):
-    """
-    Loads and fuses an ensemble or single YOLOv5 model from weights, handling device placement and model adjustments.
+from pathlib import Path
+import torch
 
-    Example inputs: weights=[a,b,c] or a single model weights=[a] or weights=a.
-    """
+def attempt_load(weights, device=None, inplace=True, fuse=True):
     from models.yolo import Detect, Model
 
     model = Ensemble()
-    for w in weights if isinstance(weights, list) else [weights]:
-        ckpt = torch.load(attempt_download(w), map_location="cpu")  # load
+    weights = [str(w) for w in weights] if isinstance(weights, list) else [str(weights)]  # Chuyển weights thành chuỗi
+
+    for w in weights:
+        model_path = str(attempt_download(w))  # Đảm bảo model_path là chuỗi
+        ckpt = torch.load(str(attempt_download(w)), map_location="cpu")
+
         ckpt = (ckpt.get("ema") or ckpt["model"]).to(device).float()  # FP32 model
 
         # Model compatibility updates
